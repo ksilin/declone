@@ -35,7 +35,7 @@ describe 'read filesystem' do
     Dir.mktmpdir() { |dir|
 
       # use join
-      filenames.each { |name| open("#{dir}/#{name}", 'w') }
+      filenames.each { |name| open(File.join(dir, name.to_s), 'w') }
 
       yield dir
     }
@@ -44,10 +44,10 @@ describe 'read filesystem' do
   # TODO- fill the files with repeated digests of their names
   def with_two_temp_dirs(filenames1 = [], filenames2 = [])
     Dir.mktmpdir() { |dir1|
-      filenames1.each { |name| open("#{dir1}/#{name}", 'w') }
+      filenames1.each { |name| open(File.join(dir, name.to_s), 'w') }
 
       Dir.mktmpdir() { |dir2|
-        filenames2.each { |name| open("#{dir2}/#{name}", 'w') }
+        filenames2.each { |name| open(File.join(dir, name.to_s), 'w') }
 
         yield dir1, dir2
       }
