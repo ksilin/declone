@@ -3,31 +3,49 @@ require_relative '../src/decloner'
 
 describe 'read filesystem' do
 
-  it 'should read the contentsof a directory' do
+  it 'should read the contents of a directory' do
     with_temp_dir [:foo, :bar] do |path|
       common_files = Decloner.new.read_dir(path)
       common_files.should eq %W(#{path}/bar #{path}/foo)
     end
   end
 
-  it 'should read contents of two directories' do
+  it 'should return no files when comparing directory to itself' do
     with_temp_dir [:foo, :bar] do |path|
       common_files = Decloner.new.get_common(path, path)
       p common_files
-      common_files.keys.should eq [:bar, :foo]
-      common_files.values.flatten.should eq Dir.glob(path + '**/*').sort
+      common_files.keys.should eq []
     end
   end
 
-  it 'should return some class' do
+  it 'should return all files when comparing directory with identically named files' do
+    with_two_temp_dirs [:foo, :bar], [:foo, :bar]  do |path, path2|
+      common_files = Decloner.new.get_common(path, path2)
+      p common_files
+      common_files.keys.should eq [:bar, :foo]
+      common_files.each {|k, v| v.size.should eq 2}
+    end
+  end
+
+  it 'should identify duplicate files by name in nested directories' do
+    with_two_temp_dirs [:foo, :bar], [:foo, :bla] do |path, path2|
+      common_files = Decloner.new.get_common(path, path2)
+      p common_files
+      common_files.keys.should eq [:foo]
+      common_files[:foo].size.should eq 2
+    end
+  end
+
+
+  # just to know, probably useless test
+  it 'should return a hash' do
     path = File.dirname(__FILE__)
-    p Decloner.new.get_common(path, path)[0].class
-    p Dir.glob(path + '**/*')
+    Decloner.new.get_common(path, path).should be_kind_of Hash
   end
 
   it 'should map filenames to paths' do
     with_temp_dir [:foo, :bar] do |path|
-      Decloner.new.basename_hash(Dir.glob(path + '**/*')).keys.should eq [:bar, :foo]
+      Decloner.new.make_basename_hash(Dir.glob(path + '**/*')).keys.should eq [:bar, :foo]
     end
   end
 
@@ -44,10 +62,10 @@ describe 'read filesystem' do
   # TODO- fill the files with repeated digests of their names
   def with_two_temp_dirs(filenames1 = [], filenames2 = [])
     Dir.mktmpdir() { |dir1|
-      filenames1.each { |name| open(File.join(dir, name.to_s), 'w') }
+      filenames1.each { |name| open(File.join(dir1, name.to_s), 'w') }
 
       Dir.mktmpdir() { |dir2|
-        filenames2.each { |name| open(File.join(dir, name.to_s), 'w') }
+        filenames2.each { |name| open(File.join(dir2, name.to_s), 'w') }
 
         yield dir1, dir2
       }
