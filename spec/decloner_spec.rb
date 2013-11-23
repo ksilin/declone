@@ -10,11 +10,39 @@ describe 'read filesystem' do
     end
   end
 
+  it 'should not list subdirectories'
+  
+  it 'should list hidden files'
+
+  it 'should read the contents of a subdirectory' do
+    with_temp_dir ["/sub/foo".to_sym, "/sub/bar".to_sym] do |path|
+      common_files = Decloner.new.read_dir(path)
+      common_files.should eq %W(#{path}/sub/bar #{path}/sub/foo)
+    end
+  end
+
+
   it 'should return no files when comparing directory to itself' do
     with_temp_dir [:foo, :bar] do |path|
       common_files = Decloner.new.get_common(path, path)
       p common_files
       common_files.keys.should eq []
+    end
+  end
+
+  it 'should return no files when comparing directory to empty directory' do
+    with_two_temp_dirs [:foo, :bar] do |path|
+      common_files = Decloner.new.get_common(path, path)
+      p common_files
+      common_files.keys.should eq []
+    end
+  end
+
+  it 'should return all files when duplicates are in a subdirectory of the first dir' do
+    with_two_temp_dirs ["/sub/foo".to_sym, "/sub/bar".to_sym, :bar, :foo] do |path|
+      common_files = Decloner.new.get_common(path, path)
+      p common_files
+      common_files.keys.should eq [:bar, :foo]
     end
   end
 
@@ -49,28 +77,36 @@ describe 'read filesystem' do
     end
   end
 
-  def with_temp_dir(filenames = [])
-    Dir.mktmpdir() { |dir|
-
-      # use join
-      filenames.each { |name| open(File.join(dir, name.to_s), 'w') }
-
-      yield dir
-    }
-  end
-
-  # TODO- fill the files with repeated digests of their names
-  def with_two_temp_dirs(filenames1 = [], filenames2 = [])
-    Dir.mktmpdir() { |dir1|
-      filenames1.each { |name| open(File.join(dir1, name.to_s), 'w') }
-
-      Dir.mktmpdir() { |dir2|
-        filenames2.each { |name| open(File.join(dir2, name.to_s), 'w') }
-
-        yield dir1, dir2
-      }
-    }
-  end
-
 end
+
+def with_temp_dir(filenames = [])
+  Dir.mktmpdir() { |dir|
+    create_temp_files(dir, filenames)
+
+    yield dir
+  }
+end
+
+# TODO- fill the files with repeated digests of their names
+def with_two_temp_dirs(filenames1 = [], filenames2 = [])
+  Dir.mktmpdir() { |dir1|
+    create_temp_files(dir1, filenames1)
+
+    Dir.mktmpdir() { |dir2|
+      create_temp_files(dir2, filenames2)
+
+      yield dir1, dir2
+    }
+  }
+end
+
+def create_temp_files(dir, filenames)
+  filenames.each { |name|
+    file_name = File.join(dir, name.to_s)
+    p "filename: #{file_name}"
+    FileUtils.mkdir_p(File.dirname(file_name))
+    open(file_name, 'w')
+  }
+end
+
 

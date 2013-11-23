@@ -1,3 +1,5 @@
+require 'find'
+
 class Decloner
 
   CRITERIA = [:name, :digest] # phash for images
@@ -16,7 +18,8 @@ class Decloner
   end
 
   def read_dir(path = File.dirname(__FILE__))
-    Dir.glob(path + '**/*').sort
+    Find.find(path).reject{|f| File.directory?(f)}.sort
+    #Dir.glob(path + '**/').reject{|f| File.directory?(f)}.sort
   end
 
   def make_basename_hash(files1)
