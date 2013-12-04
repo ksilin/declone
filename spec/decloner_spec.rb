@@ -11,7 +11,7 @@ describe 'read filesystem' do
   end
 
   it 'should not list subdirectories'
-  
+
   it 'should list hidden files'
 
   it 'should read the contents of a subdirectory' do

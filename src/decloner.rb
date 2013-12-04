@@ -19,7 +19,6 @@ class Decloner
 
   def read_dir(path = File.dirname(__FILE__))
     Find.find(path).reject{|f| File.directory?(f)}.sort
-    #Dir.glob(path + '**/').reject{|f| File.directory?(f)}.sort
   end
 
   def make_basename_hash(files1)
